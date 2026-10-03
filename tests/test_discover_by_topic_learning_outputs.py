@@ -521,11 +521,100 @@ def test_rate_limit_wait_cannot_overrun_batch_budget(monkeypatch):
         discovery._request("https://api.github.com/search/code")
 
 
+@pytest.mark.parametrize("failure", [500, 502, 503, 504, "timeout", "connection"])
+def test_transient_api_failure_retries_the_same_request(monkeypatch, failure):
+    module = load_module()
+    discovery = module.GitHubTopicDiscovery(request_delay=0)
+    discovery.checkpointed = True
+    response = module.requests.Response()
+    response.status_code = failure if isinstance(failure, int) else 200
+    response._content = b'{"items": []}'
+    calls, waits = [], []
+
+    def get(url, **kwargs):
+        calls.append((url, kwargs))
+        if len(calls) == 1:
+            if failure == "timeout":
+                raise module.requests.Timeout("temporary timeout")
+            if failure == "connection":
+                raise module.requests.ConnectionError("temporary connection failure")
+            return response
+        success = module.requests.Response()
+        success.status_code = 200
+        success._content = b'{"items": []}'
+        return success
+
+    monkeypatch.setattr(discovery.session, "get", get)
+    monkeypatch.setattr(module.time, "sleep", waits.append)
+    url = "https://api.github.com/search/code"
+    params = {"q": "filename:SKILL.md repo:acme/demo", "per_page": 100}
+
+    assert discovery._request(url, params) == {"items": []}
+    assert calls == [(url, {"params": params, "timeout": 30})] * 2
+    assert waits == [1]
+
+
+@pytest.mark.parametrize("failure", [503, "timeout", "connection"])
+def test_exhausted_api_retries_fail_without_advancing_full_cycle(tmp_path, monkeypatch, failure):
+    module = load_module()
+    discovery = module.GitHubTopicDiscovery(request_delay=0)
+    paths = batch_paths(tmp_path)
+    paths["time_budget_seconds"] = 0
+    original = '{"repos": ["acme/demo"], "next_repo": 0}'
+    paths["progress_path"].write_text(original)
+    response = module.requests.Response()
+    response.status_code = 503
+    response.url = "https://api.github.com/search/code?q=filename%3ASKILL.md+repo%3Aacme%2Fdemo"
+    error = (module.requests.Timeout("upstream timed out") if failure == "timeout"
+             else module.requests.ConnectionError("upstream disconnected"))
+    calls, waits = [], []
+
+    def get(url, **kwargs):
+        calls.append(url)
+        if failure != 503:
+            raise error
+        return response
+
+    monkeypatch.setattr(discovery.session, "get", get)
+    monkeypatch.setattr(module.time, "sleep", waits.append)
+    expected_error = module.requests.HTTPError if failure == 503 else type(error)
+    with pytest.raises(expected_error) as raised:
+        discovery.run(**paths)
+
+    if failure == 503:
+        assert raised.value.response is response
+        assert raised.value.response.status_code == 503
+        assert response.url in str(raised.value)
+    else:
+        assert raised.value is error
+    assert len(calls) == 4
+    assert waits == [1, 2, 4]
+    assert paths["progress_path"].read_text() == original
+    assert not paths["output_json"].exists()
+    assert not discovery.repo_candidates["acme/demo"].get("unavailable")
+
+
+def test_transient_retry_wait_cannot_overrun_batch_budget(monkeypatch):
+    module = load_module()
+    discovery = module.GitHubTopicDiscovery(request_delay=0)
+    discovery.checkpointed = True
+    discovery.deadline = 1
+    response = module.requests.Response()
+    response.status_code = 503
+    monkeypatch.setattr(discovery.session, "get", lambda *args, **kwargs: response)
+    monkeypatch.setattr(module.time, "monotonic", lambda: 0)
+    monkeypatch.setattr(module.time, "sleep", lambda _: pytest.fail("must not sleep past budget"))
+
+    with pytest.raises(module.DiscoveryBudgetExpired):
+        discovery._request("https://api.github.com/search/code")
+
+
 @pytest.mark.parametrize("stage", ["request", "download"])
 def test_checkpointed_network_failure_is_not_treated_as_completed(stage, tmp_path, monkeypatch):
     module = load_module()
     discovery = module.GitHubTopicDiscovery(request_delay=0)
     discovery.checkpointed = True
+    monkeypatch.setattr(module.time, "sleep", lambda _: None)
 
     def timeout(*args, **kwargs):
         raise module.requests.Timeout("upstream timed out")
@@ -547,7 +636,7 @@ def test_incomplete_search_results_cannot_advance_cycle(monkeypatch):
     response._content = b'{"incomplete_results": true, "items": []}'
     monkeypatch.setattr(discovery.session, "get", lambda *args, **kwargs: response)
     with pytest.raises(RuntimeError, match="incomplete discovery results"):
-        discovery.get_skill_files_from_repo("acme/demo")
+        discovery._request("https://api.github.com/search/code")
 
 
 @pytest.mark.parametrize("status", [404, 422, 401, 500])
@@ -555,6 +644,7 @@ def test_repo_removed_between_batches_is_explicitly_recorded(status, monkeypatch
     module = load_module()
     discovery = module.GitHubTopicDiscovery(request_delay=0)
     discovery.checkpointed = True
+    monkeypatch.setattr(module.time, "sleep", lambda _: None)
     response = module.requests.Response()
     response.status_code = status
     missing = module.requests.Response()
@@ -593,3 +683,153 @@ def test_registry_repo_from_existing_snapshot_never_fetches_skill_inventory(monk
     assert discovery.get_skill_files_from_repo("majiayu000/claude-skill-registry") == []
     assert discovery.get_skill_files_from_repo("majiayu000/claude-skill-registry-core") == []
     assert discovery.get_skill_files_from_repo("majiayu000/claude-skill-registry-data") == []
+
+
+@pytest.mark.parametrize("branch", ["main", "feature/skills"])
+def test_incomplete_repo_search_reads_complete_default_branch_tree(monkeypatch, branch):
+    import json
+
+    module = load_module()
+    discovery = module.GitHubTopicDiscovery(request_delay=0)
+    discovery.checkpointed = True
+    calls = []
+
+    def get(url, **kwargs):
+        calls.append((url, kwargs.get("params")))
+        response = module.requests.Response()
+        response.status_code = 200
+        if url.endswith("/search/code"):
+            payload = {"incomplete_results": True, "items": []}
+        elif "/git/trees/" in url:
+            payload = {"truncated": False, "tree": [
+                {"type": "blob", "path": "skills/solana-token-research/SKILL.md"},
+                {"type": "blob", "path": "templates/skill/SKILL.md"},
+                {"type": "blob", "path": "README.md"},
+                {"type": "blob", "path": "SKILL.md.bak"},
+                {"type": "tree", "path": "directory/SKILL.md"},
+            ]}
+        else:
+            payload = {"default_branch": branch}
+        response._content = json.dumps(payload).encode()
+        return response
+
+    monkeypatch.setattr(discovery.session, "get", get)
+    skills = discovery.get_skill_files_from_repo("acme/demo")
+    encoded_branch = branch.replace("/", "%2F")
+    assert skills == [
+        {"repo": "acme/demo", "path": path,
+         "html_url": f"https://github.com/acme/demo/blob/{encoded_branch}/{path}", "branch": branch}
+        for path in ["skills/solana-token-research/SKILL.md", "templates/skill/SKILL.md"]
+    ]
+    assert calls == [
+        ("https://api.github.com/search/code", {"q": "filename:SKILL.md repo:acme/demo", "per_page": 100}),
+        ("https://api.github.com/repos/acme/demo", None),
+        (f"https://api.github.com/repos/acme/demo/git/trees/{encoded_branch}", {"recursive": "1"}),
+    ]
+
+
+@pytest.mark.parametrize("failure", ["truncated", "missing_flag", "missing_tree", "metadata_404", "tree_404", "tree_409", "tree_500", "tree_timeout"])
+def test_incomplete_repo_search_tree_failure_cannot_complete_inventory(monkeypatch, failure):
+    import json
+
+    module = load_module()
+    discovery = module.GitHubTopicDiscovery(request_delay=0)
+    discovery.checkpointed = True
+    monkeypatch.setattr(module.time, "sleep", lambda _: None)
+
+    def get(url, **kwargs):
+        is_tree = "/git/trees/" in url
+        response = module.requests.Response()
+        response.status_code = 200
+        if url.endswith("/search/code"):
+            payload = {"incomplete_results": True, "items": []}
+        elif is_tree:
+            if failure == "tree_timeout":
+                raise module.requests.Timeout("tree unavailable")
+            if failure.startswith("tree_"):
+                response.status_code = int(failure.rsplit("_", 1)[1])
+            payload = {"truncated": failure == "truncated", "tree": []}
+            if failure == "missing_flag":
+                payload.pop("truncated")
+            elif failure == "missing_tree":
+                payload.pop("tree")
+        else:
+            if failure == "metadata_404":
+                response.status_code = 404
+            payload = {"default_branch": "main"}
+        response._content = json.dumps(payload).encode()
+        return response
+
+    monkeypatch.setattr(discovery.session, "get", get)
+    if failure == "truncated":
+        error, match = RuntimeError, "truncated tree"
+    elif failure in {"missing_flag", "missing_tree"}:
+        error, match = KeyError, "truncated" if failure == "missing_flag" else "tree"
+    elif failure == "tree_timeout":
+        error, match = module.requests.Timeout, "tree unavailable"
+    else:
+        error, match = module.requests.HTTPError, None
+    with pytest.raises(error, match=match):
+        discovery.get_skill_files_from_repo("acme/demo")
+
+
+@pytest.mark.parametrize("outcome", ["success", "403", "500", "timeout", "security_rejection"])
+def test_incomplete_tree_default_branch_downloads_before_completing_cycle(tmp_path, monkeypatch, outcome):
+    import json
+
+    module = load_module()
+    fake_inventory(monkeypatch, module, ["acme/demo"])
+    paths = batch_paths(tmp_path)
+    branch = "feature/skills"
+    skill_paths = ["skills/first/SKILL.md", "skills/second skill/SKILL.md"]
+    calls = []
+    safe = "---\nname: demo\ndescription: Safe example.\n---\n# Demo\n"
+    unsafe = safe + "```python\nimport subprocess\nsubprocess.run('echo unsafe', shell=True)\n```\n"
+
+    def get(session, url, **kwargs):
+        calls.append(url)
+        response = module.requests.Response()
+        response.status_code = 200
+        if url.endswith("/search/code"):
+            payload = {"incomplete_results": True, "items": []}
+        elif "/git/trees/" in url:
+            payload = {"truncated": False, "tree": [{"type": "blob", "path": p} for p in skill_paths]}
+        elif url.startswith(module.GITHUB_RAW):
+            if "/feature%2Fskills/" not in url:
+                response.status_code = 404
+                response._content = b"not found"
+                return response
+            if outcome == "timeout":
+                raise module.requests.Timeout("raw content unavailable")
+            if outcome in {"403", "500"}:
+                response.status_code = int(outcome)
+            response._content = (unsafe if outcome == "security_rejection" else safe).encode()
+            return response
+        else:
+            payload = {"default_branch": branch}
+        response._content = json.dumps(payload).encode()
+        return response
+
+    monkeypatch.setattr(module.requests.Session, "get", get)
+    discovery = module.GitHubTopicDiscovery(request_delay=0)
+    if outcome in {"403", "500", "timeout"}:
+        error = module.requests.Timeout if outcome == "timeout" else module.requests.HTTPError
+        with pytest.raises(error):
+            discovery.run(**paths)
+        assert not paths["progress_path"].exists()
+        assert not paths["output_json"].exists()
+        assert not list(paths["output_dir"].rglob("SKILL.md"))
+    else:
+        discovery.run(**paths)
+        state = json.loads(paths["progress_path"].read_text())
+        assert state["next_repo"] == 1 and state["completed_at"]
+        archived = list(paths["output_dir"].rglob("SKILL.md"))
+        assert len(archived) == (2 if outcome == "success" else 0)
+        if outcome == "success":
+            assert all(p.read_text() == safe for p in archived)
+            metadata = [json.loads(p.read_text()) for p in paths["output_dir"].rglob("metadata.json")]
+            assert {m["path"] for m in metadata} == set(skill_paths)
+            assert all(m["github_branch"] == branch for m in metadata)
+    raw_calls = [u for u in calls if u.startswith(module.GITHUB_RAW)]
+    expected = [f"{module.GITHUB_RAW}/acme/demo/feature%2Fskills/{module.quote(p)}" for p in skill_paths]
+    assert raw_calls == (expected[:1] if outcome in {"403", "500", "timeout"} else expected)
