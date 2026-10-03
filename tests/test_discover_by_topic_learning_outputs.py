@@ -29,7 +29,7 @@ class FakeSession:
         self.headers = {}
         self.calls = 0
 
-    def get(self, url, timeout=None):
+    def get(self, url, timeout=None, params=None):
         self.calls += 1
         return self.response
 
@@ -522,13 +522,15 @@ def test_rate_limit_wait_cannot_overrun_batch_budget(monkeypatch):
 
 
 @pytest.mark.parametrize("failure", [500, 502, 503, 504, "timeout", "connection"])
-def test_transient_api_failure_retries_the_same_request(monkeypatch, failure):
+@pytest.mark.parametrize("target", ["api", "raw"])
+def test_transient_github_failure_retries_the_same_request(tmp_path, monkeypatch, failure, target):
     module = load_module()
     discovery = module.GitHubTopicDiscovery(request_delay=0)
     discovery.checkpointed = True
     response = module.requests.Response()
     response.status_code = failure if isinstance(failure, int) else 200
-    response._content = b'{"items": []}'
+    content = b"---\nname: demo\ndescription: Safe example.\n---\n# Demo\n"
+    response._content = content if target == "raw" else b'{"items": []}'
     calls, waits = [], []
 
     def get(url, **kwargs):
@@ -541,21 +543,29 @@ def test_transient_api_failure_retries_the_same_request(monkeypatch, failure):
             return response
         success = module.requests.Response()
         success.status_code = 200
-        success._content = b'{"items": []}'
+        success._content = response.content
         return success
 
     monkeypatch.setattr(discovery.session, "get", get)
     monkeypatch.setattr(module.time, "sleep", waits.append)
-    url = "https://api.github.com/search/code"
-    params = {"q": "filename:SKILL.md repo:acme/demo", "per_page": 100}
-
-    assert discovery._request(url, params) == {"items": []}
-    assert calls == [(url, {"params": params, "timeout": 30})] * 2
+    if target == "raw":
+        url = f"{module.GITHUB_RAW}/acme/demo/feature%2Fskills/skills/demo/SKILL.md"
+        assert discovery.download_skill("acme/demo", "skills/demo/SKILL.md", tmp_path,
+                                        branch="feature/skills")
+        assert next(tmp_path.rglob("SKILL.md")).read_bytes() == content
+        expected_kwargs = {"params": None, "timeout": 15}
+    else:
+        url = "https://api.github.com/search/code"
+        params = {"q": "filename:SKILL.md repo:acme/demo", "per_page": 100}
+        assert discovery._request(url, params) == {"items": []}
+        expected_kwargs = {"params": params, "timeout": 30}
+    assert calls == [(url, expected_kwargs)] * 2
     assert waits == [1]
 
 
 @pytest.mark.parametrize("failure", [503, "timeout", "connection"])
-def test_exhausted_api_retries_fail_without_advancing_full_cycle(tmp_path, monkeypatch, failure):
+@pytest.mark.parametrize("target", ["api", "raw"])
+def test_exhausted_github_retries_fail_without_advancing_full_cycle(tmp_path, monkeypatch, failure, target):
     module = load_module()
     discovery = module.GitHubTopicDiscovery(request_delay=0)
     paths = batch_paths(tmp_path)
@@ -576,6 +586,9 @@ def test_exhausted_api_retries_fail_without_advancing_full_cycle(tmp_path, monke
         return response
 
     monkeypatch.setattr(discovery.session, "get", get)
+    if target == "raw":
+        monkeypatch.setattr(discovery, "get_skill_files_from_repo",
+                            lambda repo: [{"path": "SKILL.md", "branch": "main"}])
     monkeypatch.setattr(module.time, "sleep", waits.append)
     expected_error = module.requests.HTTPError if failure == 503 else type(error)
     with pytest.raises(expected_error) as raised:
@@ -594,7 +607,8 @@ def test_exhausted_api_retries_fail_without_advancing_full_cycle(tmp_path, monke
     assert not discovery.repo_candidates["acme/demo"].get("unavailable")
 
 
-def test_transient_retry_wait_cannot_overrun_batch_budget(monkeypatch):
+@pytest.mark.parametrize("target", ["api", "raw"])
+def test_transient_retry_wait_cannot_overrun_batch_budget(tmp_path, monkeypatch, target):
     module = load_module()
     discovery = module.GitHubTopicDiscovery(request_delay=0)
     discovery.checkpointed = True
@@ -606,7 +620,49 @@ def test_transient_retry_wait_cannot_overrun_batch_budget(monkeypatch):
     monkeypatch.setattr(module.time, "sleep", lambda _: pytest.fail("must not sleep past budget"))
 
     with pytest.raises(module.DiscoveryBudgetExpired):
-        discovery._request("https://api.github.com/search/code")
+        if target == "raw":
+            discovery.download_skill("acme/demo", "SKILL.md", tmp_path, branch="main")
+        else:
+            discovery._request("https://api.github.com/search/code")
+
+
+def test_raw_missing_main_tries_master_without_retrying(tmp_path, monkeypatch):
+    module = load_module()
+    discovery = module.GitHubTopicDiscovery()
+    discovery.checkpointed = True
+    calls = []
+    content = b"---\nname: demo\ndescription: Safe example.\n---\n# Demo\n"
+
+    def get(url, **kwargs):
+        calls.append(url)
+        response = module.requests.Response()
+        response.status_code = 404 if "/main/" in url else 200
+        response._content = b"not found" if response.status_code == 404 else content
+        return response
+
+    monkeypatch.setattr(discovery.session, "get", get)
+    monkeypatch.setattr(module.time, "sleep", lambda _: pytest.fail("404 must not retry"))
+    assert discovery.download_skill("acme/demo", "SKILL.md", tmp_path)
+    assert calls == [f"{module.GITHUB_RAW}/acme/demo/{branch}/SKILL.md"
+                     for branch in ("main", "master")]
+    assert next(tmp_path.rglob("SKILL.md")).read_bytes() == content
+
+
+def test_noncheckpointed_raw_failure_keeps_false_result(tmp_path, monkeypatch):
+    module = load_module()
+    discovery = module.GitHubTopicDiscovery(request_delay=0)
+    calls = []
+    def get(url, **kwargs):
+        calls.append(url)
+        raise module.requests.ReadTimeout("raw content unavailable")
+    monkeypatch.setattr(discovery.session, "get", get)
+    waits = []
+    monkeypatch.setattr(module.time, "sleep", waits.append)
+
+    assert discovery.download_skill("acme/demo", "SKILL.md", tmp_path, branch="main") is False
+    assert len(calls) == 4
+    assert waits == [1, 2, 4]
+    assert not list(tmp_path.rglob("SKILL.md"))
 
 
 @pytest.mark.parametrize("stage", ["request", "download"])
@@ -780,6 +836,7 @@ def test_incomplete_tree_default_branch_downloads_before_completing_cycle(tmp_pa
     module = load_module()
     fake_inventory(monkeypatch, module, ["acme/demo"])
     paths = batch_paths(tmp_path)
+    paths["time_budget_seconds"] = 0
     branch = "feature/skills"
     skill_paths = ["skills/first/SKILL.md", "skills/second skill/SKILL.md"]
     calls = []
@@ -811,6 +868,7 @@ def test_incomplete_tree_default_branch_downloads_before_completing_cycle(tmp_pa
         return response
 
     monkeypatch.setattr(module.requests.Session, "get", get)
+    monkeypatch.setattr(module.time, "sleep", lambda _: None)
     discovery = module.GitHubTopicDiscovery(request_delay=0)
     if outcome in {"403", "500", "timeout"}:
         error = module.requests.Timeout if outcome == "timeout" else module.requests.HTTPError
@@ -832,4 +890,83 @@ def test_incomplete_tree_default_branch_downloads_before_completing_cycle(tmp_pa
             assert all(m["github_branch"] == branch for m in metadata)
     raw_calls = [u for u in calls if u.startswith(module.GITHUB_RAW)]
     expected = [f"{module.GITHUB_RAW}/acme/demo/feature%2Fskills/{module.quote(p)}" for p in skill_paths]
-    assert raw_calls == (expected[:1] if outcome in {"403", "500", "timeout"} else expected)
+    assert raw_calls == (expected[:1] * 4 if outcome in {"500", "timeout"}
+                         else expected[:1] if outcome == "403" else expected)
+
+
+@pytest.mark.parametrize("status", [403, 404])
+def test_raw_terminal_status_is_not_retried(tmp_path, monkeypatch, status):
+    module = load_module()
+    discovery = module.GitHubTopicDiscovery(request_delay=0)
+    discovery.checkpointed = True
+    response = module.requests.Response()
+    response.status_code = status
+    response.headers["X-RateLimit-Reset"] = str(int(module.time.time()) + 20)
+    calls = []
+    monkeypatch.setattr(discovery.session, "get", lambda *args, **kwargs: calls.append(args) or response)
+    monkeypatch.setattr(module.time, "sleep", lambda _: pytest.fail("terminal status must not retry"))
+    if status == 403:
+        with pytest.raises(module.requests.HTTPError):
+            discovery.download_skill("acme/demo", "SKILL.md", tmp_path, branch="main")
+    else:
+        assert discovery.download_skill("acme/demo", "SKILL.md", tmp_path, branch="main") is False
+    assert len(calls) == 1
+    assert not list(tmp_path.rglob("SKILL.md"))
+
+
+def test_raw_retry_wait_cannot_overrun_existing_budget(tmp_path, monkeypatch):
+    module = load_module()
+    fake_inventory(monkeypatch, module, ["acme/demo"])
+    discovery = module.GitHubTopicDiscovery(request_delay=0)
+    paths = batch_paths(tmp_path)
+    paths["time_budget_seconds"] = 1
+    response = module.requests.Response()
+    response.status_code = 503
+    calls = []
+    monkeypatch.setattr(discovery.session, "get", lambda *args, **kwargs: calls.append(args) or response)
+    monkeypatch.setattr(discovery, "get_skill_files_from_repo", lambda repo: [
+        {"repo": repo, "path": "SKILL.md", "branch": "main"},
+    ])
+    monkeypatch.setattr(module.time, "monotonic", lambda: 0)
+    monkeypatch.setattr(module.time, "sleep", lambda _: pytest.fail("must not sleep past budget"))
+    assert discovery.run(**paths) == []
+    progress = module.json.loads(paths["progress_path"].read_text())
+    assert progress["next_repo"] == 0
+    assert progress["completed_at"] is None
+    assert len(calls) == 1
+    assert not list(tmp_path.rglob("SKILL.md"))
+
+
+def test_noncheckpointed_raw_http_failure_keeps_branch_fallback(tmp_path, monkeypatch):
+    module = load_module()
+    discovery = module.GitHubTopicDiscovery(request_delay=0)
+    calls = []
+
+    def get(url, **kwargs):
+        calls.append((url, kwargs))
+        response = module.requests.Response()
+        response.status_code = 500 if "/main/" in url else 200
+        response._content = b"---\nname: demo\ndescription: Preserve ordinary branch probing.\n---\n# Demo\n"
+        return response
+
+    monkeypatch.setattr(discovery.session, "get", get)
+    monkeypatch.setattr(module.time, "sleep", lambda _: pytest.fail("ordinary HTTP status must not retry"))
+    assert discovery.download_skill("acme/demo", "SKILL.md", tmp_path) is True
+    assert calls == [(f"https://raw.githubusercontent.com/acme/demo/{branch}/SKILL.md", {"params": None, "timeout": 15})
+                     for branch in ["main", "master"]]
+
+
+@pytest.mark.parametrize("checkpointed", [False, True])
+def test_raw_201_returns_false_without_json_parsing(tmp_path, monkeypatch, checkpointed):
+    module = load_module()
+    discovery = module.GitHubTopicDiscovery(request_delay=0)
+    discovery.checkpointed = checkpointed
+    response = module.requests.Response()
+    response.status_code = 201
+    response._content = b"accepted, but not a SKILL.md response"
+    discovery.session = FakeSession(response)
+    monkeypatch.setattr(module.time, "sleep", lambda _: pytest.fail("201 must not retry"))
+
+    assert discovery.download_skill("acme/demo", "SKILL.md", tmp_path, branch="main") is False
+    assert discovery.session.calls == 1
+    assert not list(tmp_path.rglob("SKILL.md"))
