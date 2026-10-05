@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-05T07:17:35.078040Z",
-  "archive_skill_md_count_raw": 311975,
-  "archive_metadata_count_raw": 311973,
-  "indexed_skill_count_scan_shape": 269235,
-  "registry_skill_count_dedup": 268803,
+  "updated_at": "2026-10-05T10:50:35.795642Z",
+  "archive_skill_md_count_raw": 311977,
+  "archive_metadata_count_raw": 311975,
+  "indexed_skill_count_scan_shape": 269237,
+  "registry_skill_count_dedup": 268805,
   "total_plugins": 4,
   "categories": 40,
   "category_counts": [
@@ -36,7 +36,7 @@
     {
       "name": "bash",
       "code": "bash",
-      "count": 6555
+      "count": 6556
     },
     {
       "name": "business",
@@ -141,7 +141,7 @@
     {
       "name": "other",
       "code": "oth",
-      "count": 55874
+      "count": 55875
     },
     {
       "name": "performance",
@@ -230,7 +230,7 @@
     },
     {
       "repo": "sickn33/agentic-awesome-skills",
-      "count": 898
+      "count": 899
     },
     {
       "repo": "Klotzkette/claude-fuer-deutsches-recht",
@@ -254,7 +254,7 @@
     }
   ],
   "featured_count": 100,
-  "independent_skill_count": 172142,
+  "independent_skill_count": 172144,
   "static_skill_page_count": 5800,
   "asset_state_counts": {
     "verified": 2
@@ -263,36 +263,36 @@
     "live": 2
   },
   "index_size_bytes": 324,
-  "index_size_gzip_bytes": 243,
+  "index_size_gzip_bytes": 244,
   "search_shard_count": 8,
-  "search_largest_shard_bytes": 8388624,
-  "search_largest_shard_gzip_bytes": 1569053,
+  "search_largest_shard_bytes": 8388629,
+  "search_largest_shard_gzip_bytes": 1569063,
   "category_shard_count": 57,
   "category_largest_part_bytes": 8388577,
-  "category_largest_part_gzip_bytes": 2035882,
-  "lite_index_count": 269235,
+  "category_largest_part_gzip_bytes": 2035881,
+  "lite_index_count": 269237,
   "lite_index_included_count": 5000,
   "lite_index_size_bytes": 3829522,
-  "lite_index_gzip_size_bytes": 724913,
+  "lite_index_gzip_size_bytes": 724912,
   "quality_index_size_bytes": 364,
   "quality_index_gzip_size_bytes": 270,
   "quality_shard_count": 10,
   "quality_largest_shard_bytes": 8388679,
-  "quality_largest_shard_gzip_bytes": 1773925,
+  "quality_largest_shard_gzip_bytes": 1773902,
   "security_index_size_bytes": 368,
-  "security_index_gzip_size_bytes": 271,
+  "security_index_gzip_size_bytes": 272,
   "security_shard_count": 32,
-  "security_largest_shard_bytes": 8388661,
-  "security_largest_shard_gzip_bytes": 1589083,
+  "security_largest_shard_bytes": 8388721,
+  "security_largest_shard_gzip_bytes": 1589082,
   "ranking_index_size_bytes": 364,
-  "ranking_index_gzip_size_bytes": 271,
+  "ranking_index_gzip_size_bytes": 270,
   "ranking_shard_count": 8,
   "ranking_largest_shard_bytes": 8388709,
-  "ranking_largest_shard_gzip_bytes": 2052992,
-  "largest_generated_file_bytes": 8388709,
+  "ranking_largest_shard_gzip_bytes": 2053000,
+  "largest_generated_file_bytes": 8388721,
   "security_scan": {
-    "total": 311973,
-    "passed": 311973,
+    "total": 311975,
+    "passed": 311975,
     "failed": 0
   }
 }
