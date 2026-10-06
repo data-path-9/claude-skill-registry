@@ -999,29 +999,136 @@ def test_sync_progress_reports_batch_separately_from_cycle(tmp_path, cursor, com
     assert f"{cursor}/2 repositories finished" in summary.read_text()
 
 
-@pytest.mark.parametrize("is_full,complete,preflight,sync,publish,attempt,failed_number,action", [
-    ("true", "false", "success", "success", "success", "1", "", "comment"),
-    ("true", "true", "success", "success", "success", "1", "", "close"),
-    ("true", "true", "success", "success", "skipped", "1", "", None),
-    ("true", "true", "success", "success", "failure", "1", "", "comment"),
-    ("false", "", "success", "success", "success", "1", "", "close"),
-    ("false", "", "success", "skipped", "success", "2", "", "close"),
-    ("true", "true", "success", "skipped", "success", "2", "", "close"),
-    ("true", "false", "success", "skipped", "success", "2", "", "comment"),
-    ("true", "", "success", "skipped", "success", "2", "", "comment"),
-    ("false", "", "success", "skipped", "success", "1", "", None),
-    ("true", "true", "success", "skipped", "failure", "2", "", "comment"),
-    ("false", "", "failure", "skipped", "skipped", "2", "", "comment"),
-    ("false", "", "cancelled", "skipped", "skipped", "2", "", None),
-    ("false", "", "success", "skipped", "success", "2", "11", None),
-    ("true", "true", "success", "skipped", "success", "2", "11", None),
-    ("false", "", "success", "success", "success", "2", "11", None),
-    ("true", "true", "success", "success", "success", "2", "11", None),
-    ("false", "", "success", "skipped", "success", "2", "9", "close"),
-    ("true", "true", "success", "skipped", "success", "2", "9", "close"),
+ALERT_PROGRESS = {
+    # Finished after the open alert was last raised (issue created 2026-10-04).
+    "done-new": {"started_at": "2026-10-03T16:05:00Z", "repos": ["a/b", "c/d"], "next_repo": 2,
+                 "completed_at": "2026-10-05T04:36:22Z"},
+    # Finished before the open alert was raised.
+    "done-old": {"started_at": "2026-09-27T02:30:00Z", "repos": ["a/b", "c/d"], "next_repo": 2,
+                 "completed_at": "2026-09-30T00:00:00Z"},
+    # A cycle that is still advancing; started_at is filled in relative to now.
+    "running": {"started_at": None, "repos": ["a/b", "c/d"], "next_repo": 1, "completed_at": None},
+}
+
+
+def stage_alert_workspace(tmp_path: Path, progress: str, published_progress: str = None) -> None:
+    """Stage the pinned helper, latest cursor, and published cursor checkouts."""
+    (tmp_path / "scripts").mkdir(exist_ok=True)
+    shutil.copy(ROOT / "scripts" / "sync_alert_decision.py", tmp_path / "scripts")
+    for checkout, value in (
+        ("latest-progress", progress),
+        ("published-progress", published_progress if published_progress is not None else progress),
+    ):
+        if value == "absent":
+            continue
+        state = dict(ALERT_PROGRESS[value])
+        if state["started_at"] is None:
+            from datetime import datetime, timedelta, timezone
+            state["started_at"] = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+        target = tmp_path / checkout / "sources" / "learning" / "full-discovery-progress.json"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(state), encoding="utf-8")
+
+
+@pytest.mark.parametrize("skip_discovery,progress,attempt,origin,action", [
+    pytest.param("false", "done-old", "2", "body", "close", id="originating-failure-recovery"),
+    pytest.param("false", "done-old", "2", "comment", "close", id="latest-bot-failure-recovery"),
+    pytest.param("false", "done-old", "2", "other-run", None, id="newer-other-run"),
+    pytest.param("false", "done-old", "2", "unknown", None, id="unconfirmed-origin"),
+    pytest.param("false", "done-old", "2", "human", None, id="human-url-is-not-an-alert"),
+    pytest.param("false", "done-old", "1", "body", None, id="first-attempt-is-not-recovery"),
+    pytest.param("true", "done-new", "1", "body", None, id="skip-discovery"),
+    pytest.param("true", "done-new", "2", "body", None, id="skip-discovery-replay"),
+])
+def test_sync_alert_closure_correlates_failure_and_discovery_profile(
+    tmp_path, skip_discovery, progress, attempt, origin, action
+):
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake_gh = bin_dir / "gh"
+    fake_gh.write_text(
+        """#!/bin/bash
+if [ "$2" = "list" ]; then
+  echo 323
+elif [ "$1" = "api" ]; then
+  case "$*" in
+    *created_at*)
+      if [ "$2" = "repos/Owner/Core/issues/323" ]; then
+        if [ "$ALERT_ORIGIN" = "unknown" ] || [ "$ALERT_ORIGIN" = "human" ]; then
+          echo '["2026-10-04T00:00:00Z", "Unknown originating run"]'
+        else
+          printf '["2026-10-04T00:00:00Z","Failed run: %s"]\\n' "$RUN_URL"
+        fi
+      elif [ "$ALERT_ORIGIN" = "comment" ]; then
+        printf '["2026-10-05T00:00:00Z","The scheduled weekly full sync failed again: %s"]\\n' "$RUN_URL"
+      elif [ "$ALERT_ORIGIN" = "other-run" ]; then
+        echo '["2026-10-05T00:00:00Z", "The scheduled weekly full sync failed again: https://github.com/Owner/Core/actions/runs/5678"]'
+      elif [ "$ALERT_ORIGIN" = "human" ] && [[ "$*" != *'.user.login == "github-actions[bot]"'* ]]; then
+        printf '["2026-10-05T00:00:00Z","Failed run: %s"]\\n' "$RUN_URL"
+      fi
+      exit 0 ;;
+  esac
+  case "$2" in
+    */issues/323) echo "Failed run: $RUN_URL" ;;
+    */issues/323/comments) ;;
+    *) exit 24 ;;
+  esac
+else
+  echo "$2" >> "$ALERT_ACTIONS"
+fi
+"""
+    )
+    fake_gh.chmod(0o755)
+    stage_alert_workspace(tmp_path, progress)
+    actions = tmp_path / "actions"
+    result = run_workflow_script(
+        workflow_step("alert", "Open, update or close the sync alert issue"), tmp_path,
+        dict(PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}", GH_REPO="Owner/Core",
+             EVENT_NAME="workflow_dispatch" if skip_discovery == "true" else "schedule",
+             IS_FULL="false" if skip_discovery == "true" else "true",
+             SKIP_DISCOVERY=skip_discovery, PREFLIGHT_RESULT="success",
+             SYNC_RESULT="skipped" if attempt == "2" else "success", PUBLISH_RESULT="success",
+             RUN_ATTEMPT=attempt, RUN_NUMBER="10",
+             RUN_URL="https://github.com/Owner/Core/actions/runs/1234", MAX_CYCLE_DAYS="",
+             WEEKLY_TITLE="[sync-data] Weekly full sync failed", ALERT_ORIGIN=origin,
+             ALERT_ACTIONS=str(actions)),
+    )
+    assert result.returncode == 0, result.stderr
+    assert (actions.read_text().strip() if actions.exists() else None) == action
+
+
+@pytest.mark.parametrize("event,is_full,progress,preflight,sync,publish,attempt,failed_number,action", [
+    # Unfinished cycles that keep advancing no longer comment on the weekly alert (#323).
+    ("schedule", "true", "running", "success", "success", "success", "1", "", None),
+    ("schedule", "true", "running", "success", "skipped", "success", "2", "", None),
+    ("schedule", "true", "absent", "success", "skipped", "success", "2", "", None),
+    ("schedule", "true", "done-new", "success", "success", "success", "1", "", "close"),
+    ("schedule", "true", "done-new", "success", "success", "skipped", "1", "", None),
+    ("schedule", "true", "done-new", "success", "success", "failure", "1", "", "comment"),
+    ("schedule", "false", "done-old", "success", "success", "success", "1", "", "close"),
+    ("schedule", "false", "done-old", "success", "skipped", "success", "2", "", "close"),
+    ("schedule", "true", "done-new", "success", "skipped", "success", "2", "", "close"),
+    ("schedule", "false", "done-old", "success", "skipped", "success", "1", "", None),
+    ("schedule", "true", "done-new", "success", "skipped", "failure", "2", "", "comment"),
+    ("schedule", "false", "done-old", "failure", "skipped", "skipped", "2", "", "comment"),
+    ("schedule", "false", "done-old", "cancelled", "skipped", "skipped", "2", "", None),
+    ("schedule", "false", "done-old", "success", "skipped", "success", "2", "11", None),
+    ("schedule", "true", "done-new", "success", "skipped", "success", "2", "11", None),
+    ("schedule", "false", "done-old", "success", "success", "success", "2", "11", None),
+    ("schedule", "true", "done-new", "success", "success", "success", "2", "11", None),
+    ("schedule", "false", "done-old", "success", "skipped", "success", "2", "9", "close"),
+    ("schedule", "true", "done-new", "success", "skipped", "success", "2", "9", "close"),
+    # A daily-bounded run after the cycle finished resolves the weekly alert.
+    ("schedule", "false", "done-new", "success", "success", "success", "1", "", "close"),
+    # Manual runs resolve a completed cycle but never open or comment on alerts.
+    ("workflow_dispatch", "true", "done-new", "success", "success", "success", "1", "", "close"),
+    ("workflow_dispatch", "false", "done-new", "success", "success", "success", "1", "", "close"),
+    ("workflow_dispatch", "false", "done-old", "success", "success", "success", "1", "", None),
+    ("workflow_dispatch", "true", "running", "success", "success", "success", "1", "", None),
+    ("workflow_dispatch", "true", "done-new", "success", "failure", "skipped", "1", "", None),
 ])
 def test_sync_alert_closes_only_after_complete_success(
-    tmp_path, is_full, complete, preflight, sync, publish, attempt, failed_number, action
+    tmp_path, event, is_full, progress, preflight, sync, publish, attempt, failed_number, action
 ):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
@@ -1029,6 +1136,15 @@ def test_sync_alert_closes_only_after_complete_success(
     fake_gh.write_text(
         """#!/bin/bash
 if [ "$1" = "api" ]; then
+  case "$*" in
+    *created_at*)
+      case "$2" in
+        */issues/323) echo '["2026-10-04T00:00:00Z", ""]' ;;
+        */issues/323/comments) ;;
+        *) exit 25 ;;
+      esac
+      exit 0 ;;
+  esac
   case "$2" in
     */issues/323) echo "Failed run: $RUN_URL" ;;
     */issues/323/comments)
@@ -1047,22 +1163,62 @@ fi
 """
     )
     fake_gh.chmod(0o755)
+    stage_alert_workspace(tmp_path, progress)
     actions = tmp_path / "actions"
     step = workflow_step("alert", "Open, update or close the sync alert issue")
     result = subprocess.run(
         ["bash", "-e", "-c", step["run"]], cwd=tmp_path, capture_output=True, text=True,
         env=dict(os.environ, PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
-                 IS_FULL=is_full, FULL_CYCLE_COMPLETE=complete, PREFLIGHT_RESULT=preflight,
+                 EVENT_NAME=event, IS_FULL=is_full, SKIP_DISCOVERY="false", PREFLIGHT_RESULT=preflight,
                  SYNC_RESULT=sync, PUBLISH_RESULT=publish, RUN_ATTEMPT=attempt, RUN_NUMBER="10",
                  RUN_URL="https://github.com/Owner/Core/actions/runs/1234", GH_REPO="Owner/Core",
-                 FAILED_RUN_NUMBER=failed_number,
+                 FAILED_RUN_NUMBER=failed_number, MAX_CYCLE_DAYS="",
+                 WEEKLY_TITLE="[sync-data] Weekly full sync failed",
                  ALERT_ACTIONS=str(actions)),
     )
     assert result.returncode == 0, result.stderr
     assert (actions.read_text().strip() if actions.exists() else None) == action
 
 
-@pytest.mark.parametrize("lookup_failure", ["body", "comments", "run"])
+@pytest.mark.parametrize("issue_exists,action", [(False, "create"), (True, None)])
+def test_sync_alert_flags_overdue_cycle_once(tmp_path, issue_exists, action):
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake_gh = bin_dir / "gh"
+    fake_gh.write_text(
+        """#!/bin/bash
+if [ "$1" = "api" ]; then
+  case "$*" in *created_at*) echo '["2026-09-01T00:00:00Z", ""]'; exit 0 ;; esac
+  exit 23
+elif [ "$2" = "list" ]; then
+  [ "$ISSUE_EXISTS" = "true" ] && echo 323
+  exit 0
+else
+  echo "$2" >> "$ALERT_ACTIONS"
+fi
+"""
+    )
+    fake_gh.chmod(0o755)
+    stage_alert_workspace(tmp_path, "absent")
+    target = tmp_path / "latest-progress" / "sources" / "learning" / "full-discovery-progress.json"
+    target.parent.mkdir(parents=True)
+    target.write_text(json.dumps({"started_at": "2026-01-01T00:00:00Z", "repos": ["a/b", "c/d"],
+                                  "next_repo": 1, "completed_at": None}), encoding="utf-8")
+    actions = tmp_path / "actions"
+    result = run_workflow_script(
+        workflow_step("alert", "Open, update or close the sync alert issue"), tmp_path,
+        dict(PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}", GH_REPO="Owner/Core",
+             EVENT_NAME="schedule", IS_FULL="true", SKIP_DISCOVERY="false", PREFLIGHT_RESULT="success",
+             SYNC_RESULT="success", PUBLISH_RESULT="success", RUN_ATTEMPT="1", RUN_NUMBER="10",
+             RUN_URL="https://github.com/Owner/Core/actions/runs/1234", MAX_CYCLE_DAYS="",
+             WEEKLY_TITLE="[sync-data] Weekly full sync failed",
+             ISSUE_EXISTS=str(issue_exists).lower(), ALERT_ACTIONS=str(actions)),
+    )
+    assert result.returncode == 0, result.stderr
+    assert (actions.read_text().strip() if actions.exists() else None) == action
+
+
+@pytest.mark.parametrize("lookup_failure", ["created", "body", "comments", "run"])
 def test_sync_alert_replay_lookup_failure_does_not_close(tmp_path, lookup_failure):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
@@ -1072,6 +1228,13 @@ def test_sync_alert_replay_lookup_failure_does_not_close(tmp_path, lookup_failur
 if [ "$2" = "list" ]; then
   echo 323
 elif [ "$1" = "api" ]; then
+  case "$*" in
+    *created_at*)
+      if [ "$LOOKUP_FAILURE" = "created" ] && [ "$2" = "repos/Owner/Core/issues/323" ]; then
+        exit 23
+      fi
+      echo '["2026-10-04T00:00:00Z", ""]'; exit 0 ;;
+  esac
   case "$2" in
     */issues/323)
       [ "$LOOKUP_FAILURE" != "body" ] || exit 23
@@ -1089,13 +1252,15 @@ fi
 """
     )
     fake_gh.chmod(0o755)
+    stage_alert_workspace(tmp_path, "done-old")
     actions = tmp_path / "actions"
     result = run_workflow_script(
         workflow_step("alert", "Open, update or close the sync alert issue"), tmp_path,
         dict(PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}", GH_REPO="Owner/Core",
-             IS_FULL="false", FULL_CYCLE_COMPLETE="", PREFLIGHT_RESULT="success",
+             EVENT_NAME="schedule", IS_FULL="false", SKIP_DISCOVERY="false", PREFLIGHT_RESULT="success",
              SYNC_RESULT="skipped", PUBLISH_RESULT="success", RUN_ATTEMPT="2", RUN_NUMBER="10",
              RUN_URL="https://github.com/Owner/Core/actions/runs/1234", ALERT_ACTIONS=str(actions),
+             MAX_CYCLE_DAYS="", WEEKLY_TITLE="[sync-data] Weekly full sync failed",
              LOOKUP_FAILURE=lookup_failure),
     )
     assert result.returncode == 23, result.stderr
@@ -1110,42 +1275,129 @@ def test_sync_alert_old_replay_preserves_newer_unfinished_cycle(tmp_path, attemp
     fake_gh.write_text(
         """#!/bin/bash
 if [ "$1" = "api" ]; then
+  case "$*" in *created_at*) echo '["2026-10-04T00:00:00Z", ""]'; exit 0 ;; esac
   case "$2" in
     */issues/323) echo "Failed run: https://github.com/Owner/Core/actions/runs/1234" ;;
-    */issues/323/comments) cat "$ALERT_HISTORY" ;;
+    */issues/323/comments) ;;
     */actions/runs/5678) echo true ;;
     *) exit 24 ;;
   esac
 elif [ "$2" = "list" ]; then
   echo 323
-elif [ "$2" = "comment" ]; then
-  echo "$5" >> "$ALERT_HISTORY"
 else
   echo "$2" >> "$ALERT_ACTIONS"
 fi
 """
     )
     fake_gh.chmod(0o755)
-    actions, history = tmp_path / "actions", tmp_path / "history"
-    history.touch()
+    # Main already holds the newer run's unfinished cycle when the old run is replayed.
+    stage_alert_workspace(tmp_path, "running")
+    actions = tmp_path / "actions"
     step = workflow_step("alert", "Open, update or close the sync alert issue")
     env = dict(PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}", GH_REPO="Owner/Core",
-               IS_FULL="true", PREFLIGHT_RESULT="success", PUBLISH_RESULT="success",
-               ALERT_ACTIONS=str(actions), ALERT_HISTORY=str(history))
-    newer_url = "https://github.com/Owner/Core/actions/runs/5678"
+               EVENT_NAME="schedule", IS_FULL="true", SKIP_DISCOVERY="false", PREFLIGHT_RESULT="success",
+               PUBLISH_RESULT="success", MAX_CYCLE_DAYS="",
+               WEEKLY_TITLE="[sync-data] Weekly full sync failed", ALERT_ACTIONS=str(actions))
     unfinished = run_workflow_script(
-        step, tmp_path, dict(env, FULL_CYCLE_COMPLETE="false", SYNC_RESULT=sync,
-                             RUN_ATTEMPT=attempt, RUN_NUMBER="11", RUN_URL=newer_url),
+        step, tmp_path, dict(env, SYNC_RESULT=sync, RUN_ATTEMPT=attempt, RUN_NUMBER="11",
+                             RUN_URL="https://github.com/Owner/Core/actions/runs/5678"),
     )
     assert unfinished.returncode == 0, unfinished.stderr
     replay = run_workflow_script(
-        step, tmp_path, dict(env, FULL_CYCLE_COMPLETE="true", SYNC_RESULT="skipped",
-                             RUN_ATTEMPT="2", RUN_NUMBER="10",
+        step, tmp_path, dict(env, SYNC_RESULT="skipped", RUN_ATTEMPT="2", RUN_NUMBER="10",
                              RUN_URL="https://github.com/Owner/Core/actions/runs/1234"),
     )
     assert replay.returncode == 0, replay.stderr
     assert not actions.exists(), actions.read_text() if actions.exists() else ""
-    assert newer_url in history.read_text()
+
+
+@pytest.mark.parametrize("event", ["schedule", "workflow_dispatch"])
+def test_sync_alert_old_incomplete_handoff_does_not_close_new_main_completion(tmp_path, event):
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake_gh = bin_dir / "gh"
+    fake_gh.write_text(
+        """#!/bin/bash
+if [ "$2" = "list" ]; then
+  echo 323
+elif [ "$1" = "api" ]; then
+  case "$*" in *created_at*) echo '["2026-10-04T00:00:00Z", ""]'; exit 0 ;; esac
+  exit 24
+else
+  touch "$ALERT_ACTIONS"
+fi
+"""
+    )
+    fake_gh.chmod(0o755)
+    stage_alert_workspace(tmp_path, "done-new", published_progress="running")
+    actions = tmp_path / "actions"
+    result = run_workflow_script(
+        workflow_step("alert", "Open, update or close the sync alert issue"), tmp_path,
+        dict(PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}", GH_REPO="Owner/Core",
+             EVENT_NAME=event, IS_FULL="true", SKIP_DISCOVERY="false", PREFLIGHT_RESULT="success",
+             SYNC_RESULT="skipped", PUBLISH_RESULT="success", RUN_ATTEMPT="2", RUN_NUMBER="10",
+             RUN_URL="https://github.com/Owner/Core/actions/runs/1234", MAX_CYCLE_DAYS="",
+             WEEKLY_TITLE="[sync-data] Weekly full sync failed", ALERT_ACTIONS=str(actions)),
+    )
+    assert result.returncode == 0, result.stderr
+    assert not actions.exists()
+
+
+def test_sync_alert_keeps_trigger_helper_when_main_advances(tmp_path):
+    alert = read_workflow(".github/workflows/sync-data.yml")["jobs"]["alert"]
+    checkout = next(
+        step for step in alert["steps"]
+        if "scripts/sync_alert_decision.py" in step.get("with", {}).get("sparse-checkout", "")
+    )
+    source = tmp_path / "source"
+    source.mkdir()
+    subprocess.run(["git", "init", "-b", "main"], cwd=source, check=True, capture_output=True)
+    (source / "scripts").mkdir()
+    helper = source / "scripts" / "sync_alert_decision.py"
+    shutil.copy(ROOT / "scripts" / "sync_alert_decision.py", helper)
+    for message in ("trigger", "advance main"):
+        if message == "advance main":
+            helper.write_text('raise SystemExit("incompatible newer helper")\n', encoding="utf-8")
+        subprocess.run(["git", "add", "."], cwd=source, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "-c", "user.name=Test", "-c", "user.email=test@example.com",
+             "commit", "-m", message], cwd=source, check=True, capture_output=True,
+        )
+        if message == "trigger":
+            trigger_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=source, text=True).strip()
+    ref = checkout["with"]["ref"].replace("${{ github.sha }}", trigger_sha)
+    checked_out_helper = tmp_path / "sync_alert_decision.py"
+    checked_out_helper.write_bytes(subprocess.check_output(
+        ["git", "show", f"{ref}:scripts/sync_alert_decision.py"], cwd=source,
+    ))
+    result = subprocess.run(
+        [sys.executable, str(checked_out_helper), "--event-name", "workflow_dispatch",
+         "--is-full", "false"], capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["action"] == "none"
+
+
+def test_sync_alert_reads_latest_and_published_progress_on_every_trigger():
+    alert = read_workflow(".github/workflows/sync-data.yml")["jobs"]["alert"]
+    assert alert["if"] == "${{ always() }}"
+    helper, latest, published = alert["steps"][:3]
+    assert helper["with"]["ref"] == "${{ github.sha }}"
+    assert helper["with"]["sparse-checkout"] == "scripts/sync_alert_decision.py"
+    for checkout in (latest, published):
+        assert checkout["uses"].startswith("actions/checkout@")
+        assert checkout["with"]["sparse-checkout"] == "sources/learning/full-discovery-progress.json"
+    assert latest["with"]["ref"] == "main"
+    assert latest["with"]["path"] == "latest-progress"
+    assert published["with"]["ref"] == "${{ needs.publish.outputs.core_sha }}"
+    assert published["with"]["path"] == "published-progress"
+    assert published["if"] == "needs.publish.result == 'success'"
+    step = workflow_step("alert", "Open, update or close the sync alert issue")
+    assert step["env"]["MAX_CYCLE_DAYS"] == "${{ vars.FULL_DISCOVERY_MAX_CYCLE_DAYS }}"
+    assert step["env"]["EVENT_NAME"] == "${{ github.event_name }}"
+    assert step["env"]["SKIP_DISCOVERY"] == (
+        "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.skip_discovery == 'true' }}"
+    )
 
 
 def test_full_discovery_cursor_commits_after_archive_and_health_gates():
@@ -1536,7 +1788,7 @@ def test_sync_data_handoff_validator_executes_and_exports_verified_fields(
     publish = read_workflow(".github/workflows/sync-data.yml")["jobs"]["publish"]
     assert publish["outputs"] == {
         key: "${{ steps.handoff.outputs." + key + " }}"
-        for key in ("full_scan", "full_cycle_complete")
+        for key in ("core_sha", "full_scan", "full_cycle_complete")
     }
     handoff = workflow_step("sync", "Build immutable publish handoff")
     assert handoff["env"]["FULL_SCAN"] == "${{ steps.discovery.outputs.profile == 'full' }}"
@@ -1545,9 +1797,6 @@ def test_sync_data_handoff_validator_executes_and_exports_verified_fields(
     assert alert["env"]["IS_FULL"] == (
         "${{ needs.sync.outputs.full_scan == 'true' || needs.publish.outputs.full_scan == 'true' "
         "|| github.event.schedule == '30 2 * * 0' }}"
-    )
-    assert alert["env"]["FULL_CYCLE_COMPLETE"] == (
-        "${{ needs.sync.outputs.full_cycle_complete || needs.publish.outputs.full_cycle_complete }}"
     )
     assert alert["env"]["RUN_ATTEMPT"] == "${{ github.run_attempt }}"
     assert alert["env"]["RUN_NUMBER"] == "${{ github.run_number }}"
