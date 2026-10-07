@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-07T06:44:23.522770Z",
+  "updated_at": "2026-10-07T17:55:41.941845Z",
   "count": 100,
   "skills": [
     {
@@ -27,6 +27,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "ql-ypicldgtgls8xdts8odfwpkwoeqc0vsygwikv4wy",
+      "copies": 6,
+      "is_canonical": true,
       "u": "skills/fix-daf59ec13873/"
     },
     {
@@ -52,7 +55,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "pzhoclcfbl9relg9u7ulffxtfy7wgrkk4ni5qq2py2u",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "update-docs",
@@ -78,6 +84,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "aywfypwy2u_5vzpg5j9slsvre_v2yyluis5dyazgpcu",
+      "copies": 4,
+      "is_canonical": true,
       "u": "skills/update-docs-007e3d85a2cf/"
     },
     {
@@ -103,7 +112,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "gj3jugvkfyzwamizgx0agibocm_rmwam4uhutc3jkcy",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "skill-creator-langgenius-dify",
@@ -128,7 +140,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "vb3da34zaxshlwoebxullnfips97cnzc7steez0hopa",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "electron-chromium-upgrade",
@@ -154,6 +169,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "pnlpit5elwqsrhjpqyjdxq6xw_a46yh0imizteorp_w",
+      "copies": 3,
+      "is_canonical": true,
       "u": "skills/electron-chromium-upgrade-b7f074d82bf5/"
     },
     {
@@ -180,6 +198,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "x0sowij8klzeygkg-1nnq1dnoftxvzv11u5krzdo03c",
+      "copies": 12,
+      "is_canonical": true,
       "u": "skills/docstring-165b79b30123/"
     },
     {
@@ -210,6 +231,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "o1ubr0viuvmjznzl6losm9o-pz2hgpkj5jvfgkyjb3e",
+      "copies": 3,
+      "is_canonical": true,
       "u": "skills/add-uint-support-2dcef1ffca8a/"
     },
     {
@@ -238,6 +262,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "c0rrnxs28qr5oiaafk3kwu0d85fexbjq56d_c5mcbaa",
+      "copies": 4,
+      "is_canonical": true,
       "u": "skills/at-dispatch-v2-041f886c82c5/"
     },
     {
@@ -267,6 +294,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "ryr7r9ykwy-kxgno9dgdgusforbh3ysjqjhrisr7ygi",
+      "copies": 10,
+      "is_canonical": false,
       "u": "skills/skill-writer-7322c25a708e/"
     },
     {
@@ -292,7 +322,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "wvavznpwxauysbkhbkdagrzxm6slgj-4wlbj-4r5neo",
+      "copies": 2,
+      "is_canonical": true
     },
     {
       "name": "browser-use-browser-use-browser-use",
@@ -315,7 +348,10 @@
       "security_status": "passed",
       "install_status": "known_good",
       "trust_score": 100,
-      "compatible_agents": []
+      "compatible_agents": [],
+      "canonical_id": "kki1bgqo4-ty6rsc0upjefvya_kosmqfbxduy3tknpi",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "concept-workflow",
@@ -340,7 +376,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "7j9myi_smtaxq6lfva2q9cb3stvnvm7ajeczu7pjnju",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "fact-check",
@@ -365,7 +404,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "qns_vcaozntk0zqcaqx3wfnubfl0asc6hf02z26hiqk",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "resource-curator",
@@ -390,7 +432,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "vm5igsqds5kvnfmu5rj8fcvuh4r6hxcgtgm9bxp_pzi",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "seo-review",
@@ -416,6 +461,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "aqvufxnex9pmxdb3hlvbsmepvfdxjpvd0lstryy1uoe",
+      "copies": 5,
+      "is_canonical": true,
       "u": "skills/seo-review-3f7776a9ed14/"
     },
     {
@@ -441,7 +489,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "ydqw8zfs1bjiovehpaphv5nosjsuk_xaqk6zyehyhy8",
+      "copies": 2,
+      "is_canonical": true
     },
     {
       "name": "claude-opus-4-5-migration",
@@ -467,6 +518,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "ndngmew0jio8zybxvqvckutfae_zfy4glx5qlmbfrnc",
+      "copies": 14,
+      "is_canonical": false,
       "u": "skills/claude-opus-4-5-migration-cc75ddc14125/"
     },
     {
@@ -497,6 +551,9 @@
         "Claude Code",
         "Codex CLI"
       ],
+      "canonical_id": "57ceqyyguhctukilt98y_8jugd8ou1kzhj6sodbnzue",
+      "copies": 50,
+      "is_canonical": false,
       "u": "skills/skill-creator-efe5cd29f4b3/"
     },
     {
@@ -523,6 +580,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "-mx0ph1h3hekpn751fmtwec0ashl7ithxqfdye5wt9s",
+      "copies": 4,
+      "is_canonical": true,
       "u": "skills/add-admin-api-endpoint-896036ddd0d3/"
     },
     {
@@ -548,7 +608,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "t8nqcdknr9ayh-4c5fscbgtvzromewojr8asrp2q1fu",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "frontend-design",
@@ -577,6 +640,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "tgd-pouw1a1od652jwmfpfpdqcb3kucs_vhmxtxa3uq",
+      "copies": 12,
+      "is_canonical": true,
       "u": "skills/frontend-design-07b9be2d3e96/"
     },
     {
@@ -602,7 +668,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "p0_4bd9tmrn_wxv2z_71c6ycqvexvwqif_bbdnx7nfa",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "analytics-events",
@@ -627,7 +696,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "a9bd9ahhlcl2dgfmyqzuuoqo_du4utfpajwgxji5sxa",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -652,7 +724,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "ysl6liu3nggv97uhl_mwk7mo9pumywrfh2kbnqx3vgu",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -677,7 +752,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "4oa6gp75cpmlt9r4kvdd-ounq8dfp1j-7idivcraw24",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -702,7 +780,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "rbkqszm12kjurskfapnr7ctfyqjg_sylxo7en2yafms",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -727,7 +808,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "hkumu9d81hf7exfoykqj-izkbxpf8voirr26agdkelu",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "typescript-write",
@@ -753,6 +837,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "j6jidhftpjsifd7-hu4u_gy70xe0nuswd863hmm9xkq",
+      "copies": 4,
+      "is_canonical": true,
       "u": "skills/typescript-write-e3a73bff70c1/"
     },
     {
@@ -778,7 +865,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "ttl4kgypo6kdrrogcsyk_18ap4jmnkw8mddcdmvq-ow",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "write-issue",
@@ -803,7 +893,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "jnwr5p8nl9ue39dac26ciffw2qgn08xeczfvqavr4vu",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "clojure-review",
@@ -832,6 +925,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "_98mcyzbca2zclwgckc5zxoj7yd0-sqq0snka1bz9uu",
+      "copies": 4,
+      "is_canonical": true,
       "u": "skills/clojure-review-5c4c5585310f/"
     },
     {
@@ -861,6 +957,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "ezmspam9imz4esqmppqzpgsibcuq35obzpent9yxmtw",
+      "copies": 3,
+      "is_canonical": true,
       "u": "skills/clojure-write-8a6dc67ae8dd/"
     },
     {
@@ -890,6 +989,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "y8faq8jx4t433h-7dlz6bka4-h3timatjvz5mwevq_q",
+      "copies": 5,
+      "is_canonical": true,
       "u": "skills/docs-review-2fbdc02d818a/"
     },
     {
@@ -919,6 +1021,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "jiebtfbah3uice17rlwltjlegyac0om4v5raftr70x8",
+      "copies": 12,
+      "is_canonical": false,
       "u": "skills/docs-write-6ab7e6f6484d/"
     },
     {
@@ -948,6 +1053,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "bfdivxjlcu8lm94mfgb3jfzgoakd1memdphujpc7xao",
+      "copies": 4,
+      "is_canonical": true,
       "u": "skills/typescript-review-f934235414a0/"
     },
     {
@@ -973,7 +1081,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "jm15mw9yqhngy-1opohwcdpio7l3auuzqzvuljbzzkw",
+      "copies": 2,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -996,7 +1107,10 @@
       "security_status": "passed",
       "install_status": "known_good",
       "trust_score": 100,
-      "compatible_agents": []
+      "compatible_agents": [],
+      "canonical_id": "tp9dkxhpiecrto2ruqfi0shjb_156ixfk0fz9vic3dk",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "api-ref-doc",
@@ -1021,7 +1135,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "fukdmufadluja6dn3s-pw8qeb5cdopw--haj2fel9sg",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "book-doc",
@@ -1046,7 +1163,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "1v1lo4pclvuy0guo5uaj17qugueijxdayijbzxyrhck",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "how-to",
@@ -1071,7 +1191,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "gz1f7kvrbm4zri7p-nueiunp74l_nqugbn4tovpljny",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "recipe",
@@ -1096,7 +1219,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "nmx8ot7gcogpwrjjeuhu-bj7z3kq29dsiw0suzwx9lm",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "resources-doc",
@@ -1121,7 +1247,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "5vdltzlq4_akd0l6ueaggy4-czrsc3zfgn-qv26bfmq",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "tutorial",
@@ -1146,7 +1275,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "s7ronku06fiozttfc6wld2lb8rxtcubopahwtschzm8",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "ui-component-doc",
@@ -1171,7 +1303,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "awmkqbycbycokymgwvd0ysogvx5rskip4llqdrnpl1s",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "commit-helper",
@@ -1196,7 +1331,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "hoges4lpfgswh6ffbsfzatrqtq3pjtf1eyofdaao-im",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "cookbook-audit-anthropics-claude-cookbooks",
@@ -1221,7 +1359,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "6qk5pdgeid_yrg8gvfkx9cftxkvkmqnbsfxk10eoidu",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "applying-brand-guidelines",
@@ -1247,6 +1388,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "tmy83rsrmroo5jffn-nags1ewgyh5_axywhpxtppaog",
+      "copies": 6,
+      "is_canonical": true,
       "u": "skills/applying-brand-guidelines-63a99b57de16/"
     },
     {
@@ -1271,6 +1415,9 @@
       "install_status": "known_good",
       "trust_score": 100,
       "compatible_agents": [],
+      "canonical_id": "zn-gxiejg94veltg9ywml1hhbriqtapxtunkw_zjhpi",
+      "copies": 3,
+      "is_canonical": true,
       "u": "skills/turborepo-23817544c2b8/"
     },
     {
@@ -1296,7 +1443,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "wneapfocdlmxlhvysmsw5qhvb-dajqpt1lncaqxy7jo",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "writing-docs",
@@ -1321,7 +1471,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "rw6uiqsmytg_5oz32glaqqv-h4a9b8b_m9r07demqta",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -1346,7 +1499,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "tiqh1hzjfgflyvrvdjgzlfuppwipff4ucjgb5jcfczm",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "run-nx-generator",
@@ -1375,6 +1531,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "pdyowegrwst6buitv_exujywasdmlipan9zp2374oy4",
+      "copies": 5,
+      "is_canonical": true,
       "u": "skills/run-nx-generator-f1aec690e652/"
     },
     {
@@ -1401,6 +1560,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "wynvtnif6o1qrv4qfnynsq2q3ujc32bpp2bwhpsdboi",
+      "copies": 4,
+      "is_canonical": true,
       "u": "skills/rag-implementation-f98368687d4f/"
     },
     {
@@ -1430,7 +1592,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "nhwggydimzkqhwfqlkk0eljmwvlp7nzyillhfbqz964",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "category",
@@ -1453,7 +1618,10 @@
       "security_status": "passed",
       "install_status": "known_good",
       "trust_score": 100,
-      "compatible_agents": []
+      "compatible_agents": [],
+      "canonical_id": "2dhvdqfiplegkvlqas_iz7f245rn2tbl7kwltsux6om",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "design-principles",
@@ -1478,7 +1646,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "outmvyfcx3ewyxcuylbsfmnuttaezdxhfmmrhotcwem",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "langsmith-fetch-composiohq-awesome-claude-skil",
@@ -1503,7 +1674,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "hg1aszonbdx3hx0v-m1k367-hnzte0rn50dfa7mcjps",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "backend-patterns-affaan-m-everything-claude-cod",
@@ -1528,7 +1702,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "cois1m1bgti9ahxexhe533bxhdxhceqyfjnjjxhtbzi",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "clickhouse-io-affaan-m-everything-claude-cod",
@@ -1553,7 +1730,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "6tlkrusc9cf_gmodcvbrcxxeozjc_zjnrtpqvygzl0q",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "coding-standards-affaan-m-everything-claude-cod",
@@ -1578,7 +1758,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "3l2c7opcovjcprfvxr7imwtwxciepcggipk8p9ycrbk",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "continuous-learning-affaan-m-everything-claude-cod",
@@ -1603,7 +1786,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "_lf5z_f7h0mpxwj1ie35zduv2vfbidpwwowbhu5pama",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "eval-harness-affaan-m-everything-claude-cod",
@@ -1628,7 +1814,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "odxwdzudqorgxlchoe-g1kk_l5plbskpdjamjdpznhu",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "frontend-patterns-affaan-m-everything-claude-cod",
@@ -1653,7 +1842,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "ksgj6xwcrf1eah9kgj2iq71vjmbrja0ftl3mjgqfsvc",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "project-guidelines-example-affaan-m-everything-claude-cod",
@@ -1678,7 +1870,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "hihulrvbliljsynxgq758rrftqqzn3fdfhekgoawnki",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "security-review-affaan-m-everything-claude-cod",
@@ -1703,7 +1898,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "g_t-kp01p8rz_cujxj2iknrbcatfuvlonugaznmar78",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "strategic-compact-affaan-m-everything-claude-cod",
@@ -1728,7 +1926,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "nohu5dhfurqnmk0m6k8riesmdxslw9s7twpqx2afav8",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "tdd-workflow-affaan-m-everything-claude-cod",
@@ -1753,7 +1954,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "xdhxmdvcsibgfpwbqs70djp-lutmndn039dq7rumeow",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "docx",
@@ -1781,6 +1985,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "qxuuwy9gt-3naosdqcgaeq2yeysduikocsfqr0jazl8",
+      "copies": 5,
+      "is_canonical": false,
       "u": "skills/docx-a93291d92464/"
     },
     {
@@ -1810,6 +2017,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "vmk1-umyiqqkyffjtyk4g502i_pbaq_iqpnr8ubfvk4",
+      "copies": 80,
+      "is_canonical": false,
       "u": "skills/internal-comms-75ef6b7c1d3a/"
     },
     {
@@ -1837,6 +2047,9 @@
       "install_status": "known_good",
       "trust_score": 100,
       "compatible_agents": [],
+      "canonical_id": "ybfrqs_bmztc3vqlxpkvwahjbx258wa2xrm47cv1qmo",
+      "copies": 98,
+      "is_canonical": false,
       "u": "skills/mcp-builder-db8848c33848/"
     },
     {
@@ -1865,6 +2078,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "w61gz6clicaa7v6-0rpcmuzrhkxpzzhrg6naovyudts",
+      "copies": 7,
+      "is_canonical": false,
       "u": "skills/pdf-f479ff159899/"
     },
     {
@@ -1895,6 +2111,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "huuak3fbqyt9msozodphu44oa-ntwewiw0kh-znt4ge",
+      "copies": 43,
+      "is_canonical": false,
       "u": "skills/web-artifacts-builder-36ce2134fea0/"
     },
     {
@@ -1922,6 +2141,9 @@
       "install_status": "known_good",
       "trust_score": 100,
       "compatible_agents": [],
+      "canonical_id": "tbg-jiygramwkry1ostzwjuecxrduzjxio13-fps1xs",
+      "copies": 103,
+      "is_canonical": false,
       "u": "skills/webapp-testing-d77a2080404e/"
     },
     {
@@ -1951,7 +2173,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "1-fwatcs6bpcjppq4o2e94mcffoclbqzixnrllof6tw",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "reviewing-code",
@@ -1976,7 +2201,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "d0zktf5dupvp9typgyasevvk7hrtwz8zpkeqqapjl3y",
+      "copies": 2,
+      "is_canonical": true
     },
     {
       "name": "ui-ux-pro-max-nextlevelbuilder-ui-ux-pro-max",
@@ -2001,7 +2229,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "toppo4qzhikzduxkd6iq5md3n9gdxlxppqkvs1i7mgm",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "agent-memory",
@@ -2027,6 +2258,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "pxy68_v8lfjoatgojcyt-e_ioz_lonyiwbzuaalxqs8",
+      "copies": 3,
+      "is_canonical": true,
       "u": "skills/agent-memory-947af469fc85/"
     },
     {
@@ -2050,7 +2284,10 @@
       "security_status": "passed",
       "install_status": "known_good",
       "trust_score": 100,
-      "compatible_agents": []
+      "compatible_agents": [],
+      "canonical_id": "eb1eja0txgioi-4ejn58smvjwvlsor53dlydmirqgjy",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -2076,7 +2313,10 @@
       "compatible_agents": [
         "Claude Code",
         "Gemini CLI"
-      ]
+      ],
+      "canonical_id": "jey01sb90dneqwekhffswk_rwkxc1arkn4czza7tw9g",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -2102,7 +2342,10 @@
       "compatible_agents": [
         "Claude Code",
         "Gemini CLI"
-      ]
+      ],
+      "canonical_id": "jlo-uqtqeeud2gqig4zayluenilvw2czwx_edl8igv0",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "guide",
@@ -2125,7 +2368,10 @@
       "security_status": "passed",
       "install_status": "known_good",
       "trust_score": 100,
-      "compatible_agents": []
+      "compatible_agents": [],
+      "canonical_id": "xzkbrvflaguukholm2t_rwdusf8emkarb3obo5hz6ec",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -2151,7 +2397,10 @@
       "compatible_agents": [
         "Claude Code",
         "Gemini CLI"
-      ]
+      ],
+      "canonical_id": "jmheuwpzqmz9j4leltb7atri5zmbs9nj9ds9f9qduou",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -2177,7 +2426,10 @@
       "compatible_agents": [
         "Claude Code",
         "Gemini CLI"
-      ]
+      ],
+      "canonical_id": "l0crg0exvmmyidi_iel8pczwajc8kw0uobodqwj76j0",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -2203,7 +2455,10 @@
       "compatible_agents": [
         "Claude Code",
         "Gemini CLI"
-      ]
+      ],
+      "canonical_id": "s8-wmeegr58sgf5rollb1tvmmdiigjac9qj9tecm868",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -2229,7 +2484,10 @@
       "compatible_agents": [
         "Claude Code",
         "Gemini CLI"
-      ]
+      ],
+      "canonical_id": "_asttoejmmrnf6s5ducbzscp0oyr31c0rituoxkpc_k",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -2255,7 +2513,10 @@
       "compatible_agents": [
         "Claude Code",
         "Gemini CLI"
-      ]
+      ],
+      "canonical_id": "dga6ffqyb68ieuymvuz5wmmkh-by20luwyv9sdzvmmk",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -2281,7 +2542,10 @@
       "compatible_agents": [
         "Claude Code",
         "Gemini CLI"
-      ]
+      ],
+      "canonical_id": "9oqxpdkmuxlykekzpfnzfyqziryfsyhc2db6c0rdq3i",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -2307,7 +2571,10 @@
       "compatible_agents": [
         "Claude Code",
         "Gemini CLI"
-      ]
+      ],
+      "canonical_id": "ipyp4bi7f-wleibossnxm0ykr_ohvzarhcqu9shcndw",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -2333,7 +2600,10 @@
       "compatible_agents": [
         "Claude Code",
         "Gemini CLI"
-      ]
+      ],
+      "canonical_id": "yuespo7kw0byldexatt5triqmd7cgyldg5hfox5bgyg",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -2359,7 +2629,10 @@
       "compatible_agents": [
         "Claude Code",
         "Gemini CLI"
-      ]
+      ],
+      "canonical_id": "uygto199rjalebxcd8xelskctzokyxocuvaol78tfie",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "unknown",
@@ -2385,7 +2658,10 @@
       "compatible_agents": [
         "Claude Code",
         "Gemini CLI"
-      ]
+      ],
+      "canonical_id": "cvpkm6vgtfftungiac8bmxqnh7-dqec29o22-4e80ha",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "agent-memory",
@@ -2413,7 +2689,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "xyq8ykygk4qkzqkhwbzv4k63pwb2rtet98zi77t1cha",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "browser-extension-developer",
@@ -2442,7 +2721,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "wh_mkvqjdjhtzj3pu8chq5ybdckk1gghyfwve5qbku0",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "lint-fixer",
@@ -2471,6 +2753,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "cvl0se4gxlyjyyticmqwgisnjd4wvebogcnkbbgxy3u",
+      "copies": 3,
+      "is_canonical": true,
       "u": "skills/lint-fixer-48787db4e427/"
     },
     {
@@ -2499,7 +2784,10 @@
       "trust_score": 100,
       "compatible_agents": [
         "Claude Code"
-      ]
+      ],
+      "canonical_id": "4pporfw3moobcalsckkdiwj9pgou3vutvftsyaws7rw",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "confidence-check",
@@ -2525,6 +2813,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "4rzhkvzaqwiawllekxinb4jwd9txmdefpe7lyu0zkug",
+      "copies": 6,
+      "is_canonical": true,
       "u": "skills/confidence-check-2b20f431f3a0/"
     },
     {
@@ -2554,6 +2845,9 @@
       "compatible_agents": [
         "Claude Code"
       ],
+      "canonical_id": "ya9jfd0drkjklmf2ryyqt1fppguhsr_q4ryti6qizwu",
+      "copies": 3,
+      "is_canonical": true,
       "u": "skills/skill-developer-481a31e911d2/"
     },
     {
@@ -2577,7 +2871,10 @@
       "security_status": "passed",
       "install_status": "known_good",
       "trust_score": 100,
-      "compatible_agents": []
+      "compatible_agents": [],
+      "canonical_id": "fgoguk72qukjkbzrxybnmnty0xbvdmf6j7pxj1o5o94",
+      "copies": 1,
+      "is_canonical": true
     },
     {
       "name": "webapp-testing-github-awesome-copilot",
@@ -2600,7 +2897,10 @@
       "security_status": "passed",
       "install_status": "known_good",
       "trust_score": 100,
-      "compatible_agents": []
+      "compatible_agents": [],
+      "canonical_id": "xuxw6xuy4jivj8s3dt3imeem_a57upyptqigs22lwfi",
+      "copies": 1,
+      "is_canonical": true
     }
   ]
 }
